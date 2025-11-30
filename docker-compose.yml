@@ -1,0 +1,32 @@
+# Usa una imagen base ligera, por ejemplo, Alpine
+FROM alpine:3.20
+
+# Instalamos curl y openssl, necesarios para descargar el binario y generar el certificado
+RUN apk update && \
+    apk add --no-cache curl openssl dos2unix
+
+# Establecemos el directorio de trabajo
+WORKDIR /root/slipstream
+
+# --- Variables de entorno con valores por defecto ---
+# NOTA: En un entorno de producción, DEBERÍAS usar un dominio real para 'CERT_DOMAIN'
+# para obtener un certificado Let's Encrypt, o reemplazar los archivos después de construi la imagen.
+ENV CERT_DOMAIN="a.domain.com" \
+    NS_DOMAIN="ns.domain.com" \
+    DNS_PORT=5300 \
+    TARGET_PORTS="22" \
+    BIN_URL="https://raw.githubusercontent.com/Mahboub-power-is-back/quic_over_dns/main/slipstream-server-v0.0.2" \
+    BASE_DIR="/root/slipstream" \
+    CERT_DIR="/root/slipstream/certs" \
+    BIN="/usr/local/bin/slipstream-server"
+
+# --- Script de configuración e inicio ---
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Puerto que expone el servidor Slipstream
+EXPOSE 5300/udp
+EXPOSE 5300/tcp
+
+# Ejecutar el script de entrada
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
